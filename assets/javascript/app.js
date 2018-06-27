@@ -11,58 +11,70 @@ var config = {
 
     var dataRef = firebase.database();
 
-    //button to add employees
+    //executes the updater function every minute to update automatically 
+    //the expected time on the table 
+
+    setInterval(function() {
+        console.log("interval run");
+        $("#trainTable > tbody").empty();
+   //Calls updater to create all the rows in the table.
+        updater();
+    }, 60 * 1000);
+
+    //button to add train
     $("#run-submit").on("click", function() { 
         event.preventDefault();
 
         // grab inputs
         var trainRoute = $("#trainRoute-input").val().trim();
         var trainDestination = $("#destination-input").val().trim();
-        var trainTime = $("#time-input").val().trim();
+        var trainTime = moment($("#time-input").val().trim(),"HH:mm").format("X");
         var trainFrequency = $("#frequency-input").val().trim();
-
+        
+        //push to DB
         var newTrain = {
             route: trainRoute,
             destination: trainDestination,
             time: trainTime,
             frequency: trainFrequency,
-            dateAdded: firebase.database.ServerValue.TIMESTAMP
         }
         dataRef.ref().push(newTrain); 
 
-        console.log(newTrain.route);
-        console.log(newTrain.destination);
-        console.log(newTrain.time);
-        console.log(newTrain.frequency);
-        console.log(newTrainp.dateAdded);
-
-        alert("Employee successfully added");
+        alert("Train successfully added");
 
         // clear text inputs 
         $("#trainRoute-input").val("");   
         $("#destination-input").val("");
         $("#time-input").val("");
         $("#frequency-input").val("");
+
+        $("#trainTable > tbody").empty();
+
+        updater();
     });
 
-    // create firebase event for adding employee to the database and a row 
-    // in the html when a user adds an entry
-    dataRef.ref().on("child_added", function(snapshot) {
-        console.log(snapshot.val()); 
+//pulls data from firebase and feeds the rows in the table 
+    function updater() { 
+        dataRef.ref().on("child_added", function(snapshot) {
+            console.log(snapshot.val()); 
+    
+            var trainRoute = snapshot.val().route;
+            var trainDestination = snapshot.val().destination;
+            var trainTime = snapshot.val().time; 
+            var trainFrequency = snapshot.val().frequency;
 
-        var trainRoute = snapshot.val().route;
-        var trainDestination = snapshot.val().destination;
-        var trainTime = snapshot.val().time; 
-        var trainFrequency = snapshot.val().frequency;
+    //Converting the time to display in the table from unix time to HH:MM
+            var fixedTime = moment.unix(trainTime).format("hh:mm A");
+            console.log(fixedTime);
 
-        console.log(trainRoute);
-        console.log(trainDestination);
-        console.log(trainTime);
-        console.log(trainFrequency);
+    //Calculate the difference between the arrival time and the actual time.
+            var mins = moment().diff(moment(trainTime, "X"), "minutes") * (1);
 
-    // add data to table
-        $("#trainTable > tbody").append('<tr><td>' + trainRoute + '</td><td>' + trainDestination + '</td><td>' + trainTime + '</td><td>' + trainFrequency + '</td><tr>');
+            console.log(mins);
 
-    }, function(errorObject) {
-        console.log("Errors handled: " + errorObject.code);
-    });
+        // add data to table
+        $("#trainTable > tbody").append('<tr><td>' + trainRoute + '</td><td>' + trainDestination + '</td><td>' + trainFrequency + '</td><td>' + fixedTime + '</td><td>' + mins + '</td><tr>');
+        });
+    }
+    
+    updater();
