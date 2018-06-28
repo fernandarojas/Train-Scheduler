@@ -62,18 +62,14 @@ var config = {
             var trainDestination = snapshot.val().destination;
             var trainTime = snapshot.val().time; 
             var trainFrequency = snapshot.val().frequency;
-
-    //Converting the time to display in the table from unix time to HH:MM
-            var fixedTime = moment.unix(trainTime).format("hh:mm A");
-            console.log(fixedTime);
-
-    //Calculate the difference between the arrival time and the actual time.
-            var mins = moment().diff(moment(trainTime, "X"), "minutes") * (1);
-
-            console.log(mins);
+    
+        //Converting the time to display in the table from unix time to HH:MM
+            var remainder = moment().diff(moment.unix(trainTime),"minutes")%trainFrequency;
+            var minutes = trainFrequency - remainder;
+            var arrival = moment().add(minutes,"m").format("hh:mm A");
 
         // add data to table
-        $("#trainTable > tbody").append('<tr><td>' + trainRoute + '</td><td>' + trainDestination + '</td><td>' + trainFrequency + '</td><td>' + fixedTime + '</td><td>' + mins + '</td><tr>');
+        $("#trainTable > tbody").append('<tr><td>' + trainRoute + '</td><td>' + trainDestination + '</td><td>' + trainFrequency + '</td><td>' + arrival + '</td><td>' + minutes + '</td><tr>');
         });
     }
     
